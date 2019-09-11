@@ -37,9 +37,6 @@ chartGroup
     .attr("width", width)
     .style("fill", "EBEBEB")
 
-// why is this not working?
-chartGroup.selectAll(".tick line").attr("stroke", "white")
-
   // Import Data
   d3.csv("healthData.csv")
     .then(function(healthData) {
@@ -54,11 +51,11 @@ chartGroup.selectAll(".tick line").attr("stroke", "white")
       // Step 2: Create scale functions
       // ==============================
       var xLinearScale = d3.scaleLinear()
-        .domain([8, d3.max(healthData, d => d.poverty)])
+        .domain([8, d3.max(healthData, d => d.poverty) + 1])
         .range([0, width]);
 
       var yLinearScale = d3.scaleLinear()
-        .domain([0, d3.max(healthData, d => d.healthcare)])
+        .domain([0, d3.max(healthData, d => d.healthcare) + 1])
         .range([height, 0]);
 
       // Step 3: Create axis functions
@@ -70,10 +67,12 @@ chartGroup.selectAll(".tick line").attr("stroke", "white")
       // ==============================
       chartGroup.append("g")
         .attr("transform", `translate(0, ${height})`)
-        .call(bottomAxis);
+        .call(bottomAxis.tickSize(-height*1.3).ticks(10)).select(".domain").remove()
 
       chartGroup.append("g")
-        .call(leftAxis);
+        .call(leftAxis.tickSize(-width*1.3).ticks(7)).select(".domain").remove()
+
+      chartGroup.selectAll(".tick line").attr("stroke", "white")
 
       // Step 5: Create Circles
       // ==============================
@@ -88,13 +87,13 @@ chartGroup.selectAll(".tick line").attr("stroke", "white")
 
       //adding label sate
 
-    chartGroup.selectAll("text")
+    chartGroup.selectAll("circle text")
          .data(healthData)
          .enter()
          .append("text")
          .classed("stateText", true)
          .attr("x", d => xLinearScale(d.poverty))
-         .attr("y", d => yLinearScale(d.healthcare))
+         .attr("y", d => yLinearScale(d.healthcare) +7)
          .text(function(d) {
          return (`${d.abbr}`)
        });
@@ -105,30 +104,20 @@ chartGroup.selectAll(".tick line").attr("stroke", "white")
         .attr("class", "d3-tip")
         .offset([80, -60])
         .html(function(d) {
-          return (`${d.state}<hr>Poverty %: ${d.poverty}<br>Healthcare %: ${d.healthcare}`);
+          return (`${d.state}<br>Poverty %: ${d.poverty}<br>Healthcare %: ${d.healthcare}`);
         });
 
       // Step 7: Create tooltip in the chart
       // ==============================
       chartGroup.call(toolTip);
 
-      chartGroup.selectAll("text")
-         .data(healthData)
-         .enter()
-         .append("text")
-         .text(function(d) {
-           return (`${d.abb}`);
-         })
-         .attr("x", d => xLinearScale(d.poverty))
-         .attr("y", d => yLinearScale(d.healthcare))
-
 
       // Step 8: Create event listeners to display and hide the tooltip
       // ==============================
-      circlesGroup.on("click", function(data) {
+      circlesGroup.on("mouseover", function(data) {
         toolTip.show(data, this);
       })
-        // onmouseout event
+        // on mouseout event
         .on("mouseout", function(data, index) {
           toolTip.hide(data);
         });
